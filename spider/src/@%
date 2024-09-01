@@ -1,0 +1,34 @@
+#include<spider.h>
+#define result_max 100000
+int main(){
+//	char* tpurl = "http://5b0988e595225.cdn.sohucs.com/images/20181030/a5dc5d318e634c6c9389c82acb3778cf.jpeg";
+	char* tpurl = "https://baike.baidu.com/item/%E9%BB%91%E7%A5%9E%E8%AF%9D%EF%BC%9A%E6%82%9F%E7%A9%BA/53303078?fr=ge_ala";
+	url_t node,tmp;
+	int sock;
+	ssl_t* ssl = NULL;
+	char request[4096];
+	result_fd = open("result.html",O_RDWR|O_CREAT,0664);
+	Save_result(NULL,NULL,NULL);
+	queue_t* e = NULL;
+	queue_t* p = NULL;
+	e = Create_queue(1000);
+	p = Create_queue(result_max);
+	strcpy(node.origin,tpurl);
+	if(Remove_duplication(e,p,node.origin))
+		Set_node(e,&node);
+	while(e->cur > 0 && p->cur < result_max){
+		if(e->cur > 300)
+			analytical_shutdown = 1;
+		Get_node(e,&tmp);
+		sock = Net_initializer();
+		Analytical_url(&tmp);
+		Connection(sock,tmp);
+		Create_request(request,tmp);
+		if(tmp.type)
+			ssl = Create_ssl(sock);
+		if((Download(sock, request, tmp, ssl))==-1)
+			continue;
+		Set_node(p,&tmp);
+		Analytical_html(e,p,tmp);
+	}
+
